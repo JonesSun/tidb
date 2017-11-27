@@ -16,7 +16,6 @@ package tikv
 import (
 	"bytes"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
