@@ -39,7 +39,7 @@ const (
 	InitialVersion       = "0"
 	putKeyNoRetry        = 1
 	keyOpDefaultRetryCnt = 3
-	putKeyRetryUnlimited = math.MaxInt64
+	putKeyRetryUnlimited = math.MaxInt32
 	keyOpDefaultTimeout  = 2 * time.Second
 	keyOpRetryInterval   = 30 * time.Millisecond
 	checkVersInterval    = 20 * time.Millisecond

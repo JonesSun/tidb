@@ -2662,7 +2662,11 @@ func base64NeededEncodedLength(n int) int {
 		// len(arg)            -> len(to_base64(arg))
 		// 6827690988321067803 -> 9223372036854775804
 		// 6827690988321067804 -> -9223372036854775808
-		if n > 6827690988321067803 {
+		parseInt, err := strconv.ParseInt("6827690988321067803", 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		if int64(n) > parseInt {
 			return -1
 		}
 	} else {
