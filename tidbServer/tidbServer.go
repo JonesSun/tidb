@@ -20,6 +20,10 @@ import (
 	"os"
 	"os/signal"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+	"runtime"
+>>>>>>> master
 =======
 	"runtime"
 >>>>>>> master
@@ -28,7 +32,10 @@ import (
 	"time"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	log "github.com/Sirupsen/logrus"
+=======
+>>>>>>> master
 =======
 >>>>>>> master
 	"github.com/juju/errors"
@@ -55,6 +62,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+	log "github.com/sirupsen/logrus"
+>>>>>>> master
 =======
 	log "github.com/sirupsen/logrus"
 >>>>>>> master
@@ -127,18 +138,24 @@ var (
 
 var (
 <<<<<<< HEAD
+<<<<<<< HEAD
 	cfg     *config.Config
 	storage kv.Storage
 	dom     *domain.Domain
 	svr     *server.Server
 	xsvr    *xserver.Server
 =======
+=======
+>>>>>>> master
 	cfg      *config.Config
 	storage  kv.Storage
 	dom      *domain.Domain
 	svr      *server.Server
 	xsvr     *xserver.Server
 	graceful bool
+<<<<<<< HEAD
+>>>>>>> master
+=======
 >>>>>>> master
 )
 
@@ -152,9 +169,15 @@ func run() {
 	//	printer.PrintRawTiDBInfo()
 	//	os.Exit(0)
 <<<<<<< HEAD
+<<<<<<< HEAD
 	//}
 	//
 	//runtime.GOMAXPROCS(runtime.NumCPU())
+=======
+	//}0
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
+>>>>>>> master
 =======
 	//}0
 
@@ -387,11 +410,17 @@ func setGlobalVars() {
 		plan.PreparedPlanCacheCapacity = cfg.PreparedPlanCache.Capacity
 	}
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> master
 
 	if cfg.TiKVClient.GrpcConnectionCount > 0 {
 		tikv.MaxConnectionCount = cfg.TiKVClient.GrpcConnectionCount
 	}
+<<<<<<< HEAD
+>>>>>>> master
+=======
 >>>>>>> master
 }
 
@@ -436,7 +465,11 @@ func setupSignalHandler() {
 	go func() {
 		sig := <-sc
 <<<<<<< HEAD
+<<<<<<< HEAD
 		log.Infof("Got signal [%d] to exit.", sig)
+=======
+		log.Infof("Got signal [%s] to exit.", sig)
+>>>>>>> master
 =======
 		log.Infof("Got signal [%s] to exit.", sig)
 >>>>>>> master
@@ -445,6 +478,12 @@ func setupSignalHandler() {
 		}
 		svr.Close()
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+		if sig == syscall.SIGTERM {
+			graceful = true
+		}
+>>>>>>> master
 =======
 		if sig == syscall.SIGTERM {
 			graceful = true
@@ -482,6 +521,12 @@ func runServer() {
 
 func cleanup() {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+	if graceful {
+		svr.GracefulDown()
+	}
+>>>>>>> master
 =======
 	if graceful {
 		svr.GracefulDown()
