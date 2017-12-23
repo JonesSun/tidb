@@ -281,15 +281,7 @@ func (c *RegionCache) getCachedRegion(id RegionVerID) *Region {
 	}
 	if cachedRegion.isValid() {
 		//atomic.StoreInt64(&cachedRegion.lastAccess, time.Now().Unix())
-<<<<<<< HEAD
-<<<<<<< HEAD
-		cachedRegion.lastAccess=time.Now().Unix()
-=======
 		cachedRegion.lastAccess = time.Now().Unix()
->>>>>>> master
-=======
-		cachedRegion.lastAccess = time.Now().Unix()
->>>>>>> master
 		return cachedRegion.region
 	}
 	return nil
