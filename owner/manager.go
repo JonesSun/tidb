@@ -21,13 +21,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/terror"
+	log "github.com/sirupsen/logrus"
 	goctx "golang.org/x/net/context"
 )
 
@@ -56,7 +56,11 @@ const (
 	// NewSessionDefaultRetryCnt is the default retry times when create new session.
 	NewSessionDefaultRetryCnt = 3
 	// NewSessionRetryUnlimited is the unlimited retry times when create new session.
+<<<<<<< HEAD
 	NewSessionRetryUnlimited = math.MaxInt32
+=======
+	NewSessionRetryUnlimited = int64(math.MaxInt64)
+>>>>>>> master
 )
 
 // ownerManager represents the structure which is used for electing owner.
@@ -122,11 +126,11 @@ func setManagerSessionTTL() error {
 }
 
 // NewSession creates a new etcd session.
-func NewSession(ctx goctx.Context, logPrefix string, etcdCli *clientv3.Client, retryCnt, ttl int) (*concurrency.Session, error) {
+func NewSession(ctx goctx.Context, logPrefix string, etcdCli *clientv3.Client, retryCnt int64, ttl int) (*concurrency.Session, error) {
 	var err error
 	var etcdSession *concurrency.Session
 	failedCnt := 0
-	for i := 0; i < retryCnt; i++ {
+	for i := int64(0); i < retryCnt; i++ {
 		if isContextDone(ctx) {
 			return etcdSession, errors.Trace(ctx.Err())
 		}

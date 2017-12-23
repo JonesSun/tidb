@@ -35,12 +35,12 @@ func (s *testSuite) TestShow(c *C) {
 
 	testSQL := `drop table if exists show_test`
 	tk.MustExec(testSQL)
-	testSQL = `create table SHOW_test (id int PRIMARY KEY AUTO_INCREMENT, c1 int comment "c1_comment", c2 int, c3 int default 1) ENGINE=InnoDB AUTO_INCREMENT=28934 DEFAULT CHARSET=utf8 COMMENT "table_comment";`
+	testSQL = `create table SHOW_test (id int PRIMARY KEY AUTO_INCREMENT, c1 int comment "c1_comment", c2 int, c3 int default 1, c4 text, key idx_wide_c4(c3, c4(10))) ENGINE=InnoDB AUTO_INCREMENT=28934 DEFAULT CHARSET=utf8 COMMENT "table_comment";`
 	tk.MustExec(testSQL)
 
 	testSQL = "show columns from show_test;"
 	result := tk.MustQuery(testSQL)
-	c.Check(result.Rows(), HasLen, 4)
+	c.Check(result.Rows(), HasLen, 5)
 
 	testSQL = "show create table show_test;"
 	result = tk.MustQuery(testSQL)
@@ -48,7 +48,7 @@ func (s *testSuite) TestShow(c *C) {
 	row := result.Rows()[0]
 	// For issue https://github.com/pingcap/tidb/issues/1061
 	expectedRow := []interface{}{
-		"SHOW_test", "CREATE TABLE `SHOW_test` (\n  `id` int(11) NOT NULL AUTO_INCREMENT,\n  `c1` int(11) DEFAULT NULL COMMENT 'c1_comment',\n  `c2` int(11) DEFAULT NULL,\n  `c3` int(11) DEFAULT '1',\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=28934 COMMENT='table_comment'"}
+		"SHOW_test", "CREATE TABLE `SHOW_test` (\n  `id` int(11) NOT NULL AUTO_INCREMENT,\n  `c1` int(11) DEFAULT NULL COMMENT 'c1_comment',\n  `c2` int(11) DEFAULT NULL,\n  `c3` int(11) DEFAULT '1',\n  `c4` text DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `idx_wide_c4` (`c3`,`c4`(10))\n) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=28934 COMMENT='table_comment'"}
 	for i, r := range row {
 		c.Check(r, Equals, expectedRow[i])
 	}
@@ -277,7 +277,7 @@ func (s *testSuite) TestShowVisibility(c *C) {
 	tk.MustExec(`flush privileges`)
 
 	tk1 := testkit.NewTestKit(c, s.store)
-	se, err := tidb.CreateSession(s.store)
+	se, err := tidb.CreateSession4Test(s.store)
 	c.Assert(err, IsNil)
 	c.Assert(se.Auth(&auth.UserIdentity{Username: "show", Hostname: "%"}, nil, nil), IsTrue)
 	tk1.Se = se
@@ -335,8 +335,9 @@ func (s *testSuite) TestShowFullProcessList(c *C) {
 	fullSQL := "show                                                                                        full processlist"
 	simpSQL := "show                                                                                        processlist"
 
-	tk.MustQuery(fullSQL).Check(testutil.RowsWithSep("|", "223|   Query|0|2|"+fullSQL))
-	tk.MustQuery(simpSQL).Check(testutil.RowsWithSep("|", "223|   Query|0|2|"+simpSQL[:100]))
+	cols := []int{4, 5, 6, 7} // columns to check: Command, Time, State, Info
+	tk.MustQuery(fullSQL).CheckAt(cols, testutil.RowsWithSep("|", "Query|0|2|"+fullSQL))
+	tk.MustQuery(simpSQL).CheckAt(cols, testutil.RowsWithSep("|", "Query|0|2|"+simpSQL[:100]))
 
 	se.SetSessionManager(nil) // reset sm so other tests won't use this
 }

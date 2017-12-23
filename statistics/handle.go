@@ -18,12 +18,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/context"
 	"github.com/pingcap/tidb/ddl/util"
 	"github.com/pingcap/tidb/infoschema"
 	"github.com/pingcap/tidb/util/sqlexec"
+	log "github.com/sirupsen/logrus"
 )
 
 type statsCache map[int64]*Table
@@ -64,6 +64,7 @@ func (h *Handle) Clear() {
 	for len(h.analyzeResultCh) > 0 {
 		<-h.analyzeResultCh
 	}
+	h.ctx.GetSessionVars().MaxChunkSize = 1
 	h.listHead = &SessionStatsCollector{mapper: make(tableDeltaMap)}
 	h.globalMap = make(tableDeltaMap)
 }

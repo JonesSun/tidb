@@ -19,11 +19,18 @@ import (
 	"net"
 	"os"
 	"os/signal"
+<<<<<<< HEAD
+=======
+	"runtime"
+>>>>>>> master
 	"strconv"
 	"syscall"
 	"time"
 
+<<<<<<< HEAD
 	log "github.com/Sirupsen/logrus"
+=======
+>>>>>>> master
 	"github.com/juju/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/tidb"
@@ -47,6 +54,10 @@ import (
 	"github.com/pingcap/tipb/go-binlog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+<<<<<<< HEAD
+=======
+	log "github.com/sirupsen/logrus"
+>>>>>>> master
 	"google.golang.org/grpc"
 )
 
@@ -115,11 +126,20 @@ var (
 )
 
 var (
+<<<<<<< HEAD
 	cfg     *config.Config
 	storage kv.Storage
 	dom     *domain.Domain
 	svr     *server.Server
 	xsvr    *xserver.Server
+=======
+	cfg      *config.Config
+	storage  kv.Storage
+	dom      *domain.Domain
+	svr      *server.Server
+	xsvr     *xserver.Server
+	graceful bool
+>>>>>>> master
 )
 
 func Init()  {
@@ -131,9 +151,15 @@ func run() {
 	//if *version {
 	//	printer.PrintRawTiDBInfo()
 	//	os.Exit(0)
+<<<<<<< HEAD
 	//}
 	//
 	//runtime.GOMAXPROCS(runtime.NumCPU())
+=======
+	//}0
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
+>>>>>>> master
 
 	registerStores()
 	loadConfig()
@@ -360,6 +386,13 @@ func setGlobalVars() {
 	if plan.PreparedPlanCacheEnabled {
 		plan.PreparedPlanCacheCapacity = cfg.PreparedPlanCache.Capacity
 	}
+<<<<<<< HEAD
+=======
+
+	if cfg.TiKVClient.GrpcConnectionCount > 0 {
+		tikv.MaxConnectionCount = cfg.TiKVClient.GrpcConnectionCount
+	}
+>>>>>>> master
 }
 
 func setupLog() {
@@ -402,11 +435,21 @@ func setupSignalHandler() {
 
 	go func() {
 		sig := <-sc
+<<<<<<< HEAD
 		log.Infof("Got signal [%d] to exit.", sig)
+=======
+		log.Infof("Got signal [%s] to exit.", sig)
+>>>>>>> master
 		if xsvr != nil {
 			xsvr.Close() // Should close xserver before server.
 		}
 		svr.Close()
+<<<<<<< HEAD
+=======
+		if sig == syscall.SIGTERM {
+			graceful = true
+		}
+>>>>>>> master
 	}()
 }
 
@@ -438,6 +481,12 @@ func runServer() {
 }
 
 func cleanup() {
+<<<<<<< HEAD
+=======
+	if graceful {
+		svr.GracefulDown()
+	}
+>>>>>>> master
 	dom.Close()
 	err := storage.Close()
 	terror.Log(errors.Trace(err))

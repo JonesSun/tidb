@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/pingcap/tidb/ast"
+	log "github.com/sirupsen/logrus"
 	goctx "golang.org/x/net/context"
 )
 
@@ -33,7 +33,7 @@ func prepareBenchSession() Session {
 		log.Fatal(err)
 	}
 	log.SetLevel(log.ErrorLevel)
-	se, err := CreateSession(store)
+	se, err := CreateSession4Test(store)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -20,7 +20,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/juju/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/tidb/ast"
@@ -40,6 +39,7 @@ import (
 	"github.com/pingcap/tidb/util/codec"
 	"github.com/pingcap/tidb/util/ranger"
 	"github.com/pingcap/tipb/go-tipb"
+	log "github.com/sirupsen/logrus"
 	goctx "golang.org/x/net/context"
 )
 
@@ -170,10 +170,10 @@ func indexRangesToKVRanges(tid, idxID int64, ranges []*ranger.IndexRange) ([]kv.
 	return krs, nil
 }
 
-func (w *indexWorker) extractTaskHandles(chk *chunk.Chunk, idxResult distsql.SelectResult) (handles []int64, err error) {
+func (w *indexWorker) extractTaskHandles(goCtx goctx.Context, chk *chunk.Chunk, idxResult distsql.SelectResult) (handles []int64, err error) {
 	handles = make([]int64, 0, w.batchSize)
 	for len(handles) < w.batchSize {
-		e0 := idxResult.NextChunk(chk)
+		e0 := idxResult.NextChunk(goCtx, chk)
 		if e0 != nil {
 			err = errors.Trace(e0)
 			return
@@ -355,8 +355,8 @@ func (e *TableReaderExecutor) Next(goCtx goctx.Context) (Row, error) {
 }
 
 // NextChunk implements the Executor NextChunk interface.
-func (e *TableReaderExecutor) NextChunk(chk *chunk.Chunk) error {
-	return e.result.NextChunk(chk)
+func (e *TableReaderExecutor) NextChunk(goCtx goctx.Context, chk *chunk.Chunk) error {
+	return e.result.NextChunk(goCtx, chk)
 }
 
 // Open implements the Executor Open interface.
@@ -375,7 +375,7 @@ func (e *TableReaderExecutor) Open(goCtx goctx.Context) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	e.result, err = distsql.SelectDAG(goCtx, e.ctx.GetClient(), kvReq, e.schema.GetTypes(), e.ctx.GetSessionVars().GetTimeZone())
+	e.result, err = distsql.SelectDAG(goCtx, e.ctx, kvReq, e.schema.GetTypes())
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -459,17 +459,25 @@ func (e *IndexReaderExecutor) Next(goCtx goctx.Context) (Row, error) {
 }
 
 // NextChunk implements the Executor NextChunk interface.
-func (e *IndexReaderExecutor) NextChunk(chk *chunk.Chunk) error {
-	return e.result.NextChunk(chk)
+func (e *IndexReaderExecutor) NextChunk(goCtx goctx.Context, chk *chunk.Chunk) error {
+	return e.result.NextChunk(goCtx, chk)
 }
 
 // Open implements the Executor Open interface.
 func (e *IndexReaderExecutor) Open(goCtx goctx.Context) error {
+	kvRanges, err := indexRangesToKVRanges(e.tableID, e.index.ID, e.ranges)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return e.open(goCtx, kvRanges)
+}
+
+func (e *IndexReaderExecutor) open(goCtx goctx.Context, kvRanges []kv.KeyRange) error {
 	span, goCtx := startSpanFollowsContext(goCtx, "executor.IndexReader.Open")
 	defer span.Finish()
 
 	var builder requestBuilder
-	kvReq, err := builder.SetIndexRanges(e.tableID, e.index.ID, e.ranges).
+	kvReq, err := builder.SetKeyRanges(kvRanges).
 		SetDAGRequest(e.dagPB).
 		SetDesc(e.desc).
 		SetKeepOrder(e.keepOrder).
@@ -479,7 +487,7 @@ func (e *IndexReaderExecutor) Open(goCtx goctx.Context) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	e.result, err = distsql.SelectDAG(goCtx, e.ctx.GetClient(), kvReq, e.schema.GetTypes(), e.ctx.GetSessionVars().GetTimeZone())
+	e.result, err = distsql.SelectDAG(goCtx, e.ctx, kvReq, e.schema.GetTypes())
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -541,7 +549,7 @@ func (e *IndexLookUpExecutor) startIndexWorker(goCtx goctx.Context, kvRanges []k
 		return errors.Trace(err)
 	}
 	// Since the first read only need handle information. So its returned col is only 1.
-	result, err := distsql.SelectDAG(goCtx, e.ctx.GetClient(), kvReq, []*types.FieldType{types.NewFieldType(mysql.TypeLonglong)}, e.ctx.GetSessionVars().GetTimeZone())
+	result, err := distsql.SelectDAG(goCtx, e.ctx, kvReq, []*types.FieldType{types.NewFieldType(mysql.TypeLonglong)})
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -551,7 +559,7 @@ func (e *IndexLookUpExecutor) startIndexWorker(goCtx goctx.Context, kvRanges []k
 		finished:     e.finished,
 		resultCh:     e.resultCh,
 		keepOrder:    e.keepOrder,
-		batchSize:    chunk.MaxCapacity,
+		batchSize:    e.maxChunkSize,
 		maxBatchSize: e.ctx.GetSessionVars().IndexLookupSize,
 	}
 	if worker.batchSize > worker.maxBatchSize {
@@ -578,7 +586,7 @@ func (e *IndexLookUpExecutor) startIndexWorker(goCtx goctx.Context, kvRanges []k
 func (w *indexWorker) fetchHandles(goCtx goctx.Context, result distsql.SelectResult) {
 	chk := chunk.NewChunk([]*types.FieldType{types.NewFieldType(mysql.TypeLonglong)})
 	for {
-		handles, err := w.extractTaskHandles(chk, result)
+		handles, err := w.extractTaskHandles(goCtx, chk, result)
 		if err != nil {
 			doneCh := make(chan error, 1)
 			doneCh <- errors.Trace(err)
@@ -617,6 +625,7 @@ func (e *IndexLookUpExecutor) buildTableReader(goCtx goctx.Context, handles []in
 		table:        e.table,
 		tableID:      e.tableID,
 		dagPB:        e.tableRequest,
+		priority:     e.priority,
 	}, handles)
 	if err != nil {
 		log.Error(err)
@@ -708,7 +717,7 @@ func (w *tableWorker) executeTask(goCtx goctx.Context, task *lookupTableTask) {
 	task.rows = make([]chunk.Row, 0, len(task.handles))
 	for {
 		chk := tableReader.newChunk()
-		err = tableReader.NextChunk(chk)
+		err = tableReader.NextChunk(goCtx, chk)
 		if err != nil {
 			log.Error(err)
 			return
@@ -782,7 +791,7 @@ func (e *IndexLookUpExecutor) Next(goCtx goctx.Context) (Row, error) {
 }
 
 // NextChunk implements Exec NextChunk interface.
-func (e *IndexLookUpExecutor) NextChunk(chk *chunk.Chunk) error {
+func (e *IndexLookUpExecutor) NextChunk(goCtx goctx.Context, chk *chunk.Chunk) error {
 	chk.Reset()
 	for {
 		resultTask, err := e.getResultTask()
@@ -795,7 +804,7 @@ func (e *IndexLookUpExecutor) NextChunk(chk *chunk.Chunk) error {
 		for resultTask.cursor < len(resultTask.rows) {
 			chk.AppendRow(0, resultTask.rows[resultTask.cursor])
 			resultTask.cursor++
-			if chk.NumRows() >= chunk.MaxCapacity {
+			if chk.NumRows() >= e.maxChunkSize {
 				return nil
 			}
 		}

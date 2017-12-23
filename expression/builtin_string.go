@@ -27,7 +27,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/ast"
 	"github.com/pingcap/tidb/context"
@@ -36,6 +35,7 @@ import (
 	"github.com/pingcap/tidb/types"
 	"github.com/pingcap/tidb/util/charset"
 	"github.com/pingcap/tidb/util/hack"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/transform"
 )
 
@@ -2646,7 +2646,7 @@ func (c *toBase64FunctionClass) getFunction(ctx context.Context, args []Expressi
 		return nil, errors.Trace(err)
 	}
 	bf := newBaseBuiltinFuncWithTp(ctx, args, types.ETString, types.ETString)
-	bf.tp.Flen = base64NeededEncodedLength(bf.args[0].GetType().Flen)
+	bf.tp.Flen = int(base64NeededEncodedLength(int64(bf.args[0].GetType().Flen)))
 	sig := &builtinToBase64Sig{bf}
 	return sig, nil
 }
@@ -2656,7 +2656,7 @@ type builtinToBase64Sig struct {
 }
 
 // base64NeededEncodedLength return the base64 encoded string length.
-func base64NeededEncodedLength(n int) int {
+func base64NeededEncodedLength(n int64) int64 {
 	// Returns -1 indicate the result will overflow.
 	if strconv.IntSize == 64 {
 		// len(arg)            -> len(to_base64(arg))
