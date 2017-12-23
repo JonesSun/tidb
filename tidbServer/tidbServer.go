@@ -125,7 +125,7 @@ var (
 )
 
 func Init() {
-	run()
+	go run()
 }
 
 func run() {
