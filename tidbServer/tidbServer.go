@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tidbServer
+package main
 
 import (
 	"flag"
@@ -19,25 +19,11 @@ import (
 	"net"
 	"os"
 	"os/signal"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 	"runtime"
->>>>>>> master
-=======
-	"runtime"
->>>>>>> master
 	"strconv"
 	"syscall"
 	"time"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-	log "github.com/Sirupsen/logrus"
-=======
->>>>>>> master
-=======
->>>>>>> master
 	"github.com/juju/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/tidb"
@@ -61,15 +47,9 @@ import (
 	"github.com/pingcap/tipb/go-binlog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-	log "github.com/sirupsen/logrus"
->>>>>>> master
-=======
-	log "github.com/sirupsen/logrus"
->>>>>>> master
+	log "github.com/Sirupsen/logrus"
 	"google.golang.org/grpc"
+	"github.com/pingcap/pd/_vendor/src/github.com/opentracing/opentracing-go"
 )
 
 // Flag Names
@@ -137,30 +117,16 @@ var (
 )
 
 var (
-<<<<<<< HEAD
-<<<<<<< HEAD
-	cfg     *config.Config
-	storage kv.Storage
-	dom     *domain.Domain
-	svr     *server.Server
-	xsvr    *xserver.Server
-=======
-=======
->>>>>>> master
 	cfg      *config.Config
 	storage  kv.Storage
 	dom      *domain.Domain
 	svr      *server.Server
 	xsvr     *xserver.Server
 	graceful bool
-<<<<<<< HEAD
->>>>>>> master
-=======
->>>>>>> master
 )
 
-func Init()  {
-	go run()
+func Init() {
+	run()
 }
 
 func run() {
@@ -168,21 +134,9 @@ func run() {
 	//if *version {
 	//	printer.PrintRawTiDBInfo()
 	//	os.Exit(0)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	//}
-	//
-	//runtime.GOMAXPROCS(runtime.NumCPU())
-=======
-	//}0
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
->>>>>>> master
-=======
-	//}0
-
-	runtime.GOMAXPROCS(runtime.NumCPU())
->>>>>>> master
 
 	registerStores()
 	loadConfig()
@@ -409,19 +363,10 @@ func setGlobalVars() {
 	if plan.PreparedPlanCacheEnabled {
 		plan.PreparedPlanCacheCapacity = cfg.PreparedPlanCache.Capacity
 	}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> master
 
 	if cfg.TiKVClient.GrpcConnectionCount > 0 {
 		tikv.MaxConnectionCount = cfg.TiKVClient.GrpcConnectionCount
 	}
-<<<<<<< HEAD
->>>>>>> master
-=======
->>>>>>> master
 }
 
 func setupLog() {
@@ -464,31 +409,14 @@ func setupSignalHandler() {
 
 	go func() {
 		sig := <-sc
-<<<<<<< HEAD
-<<<<<<< HEAD
-		log.Infof("Got signal [%d] to exit.", sig)
-=======
 		log.Infof("Got signal [%s] to exit.", sig)
->>>>>>> master
-=======
-		log.Infof("Got signal [%s] to exit.", sig)
->>>>>>> master
 		if xsvr != nil {
 			xsvr.Close() // Should close xserver before server.
 		}
 		svr.Close()
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 		if sig == syscall.SIGTERM {
 			graceful = true
 		}
->>>>>>> master
-=======
-		if sig == syscall.SIGTERM {
-			graceful = true
-		}
->>>>>>> master
 	}()
 }
 
@@ -520,18 +448,9 @@ func runServer() {
 }
 
 func cleanup() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 	if graceful {
 		svr.GracefulDown()
 	}
->>>>>>> master
-=======
-	if graceful {
-		svr.GracefulDown()
-	}
->>>>>>> master
 	dom.Close()
 	err := storage.Close()
 	terror.Log(errors.Trace(err))
