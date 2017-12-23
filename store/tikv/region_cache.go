@@ -16,7 +16,6 @@ package tikv
 import (
 	"bytes"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/google/btree"
@@ -40,8 +39,8 @@ type CachedRegion struct {
 }
 
 func (c *CachedRegion) isValid() bool {
-	lastAccess := atomic.LoadInt64(&c.lastAccess)
-	lastAccessTime := time.Unix(lastAccess, 0)
+	//lastAccess := atomic.LoadInt64(&c.lastAccess)
+	lastAccessTime := time.Unix(c.lastAccess, 0)
 	return time.Since(lastAccessTime) < rcDefaultRegionCacheTTL
 }
 
@@ -281,7 +280,8 @@ func (c *RegionCache) getCachedRegion(id RegionVerID) *Region {
 		return nil
 	}
 	if cachedRegion.isValid() {
-		atomic.StoreInt64(&cachedRegion.lastAccess, time.Now().Unix())
+		//atomic.StoreInt64(&cachedRegion.lastAccess, time.Now().Unix())
+		cachedRegion.lastAccess = time.Now().Unix()
 		return cachedRegion.region
 	}
 	return nil

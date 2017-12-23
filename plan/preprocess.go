@@ -389,8 +389,8 @@ func checkColumn(colDef *ast.ColumnDef) error {
 	if tp == nil {
 		return nil
 	}
-	if tp.Flen > math.MaxUint32 {
-		return types.ErrTooBigDisplayWidth.Gen("Display width out of range for column '%s' (max = %d)", colDef.Name.Name.O, math.MaxUint32)
+	if tp.Flen > math.MaxInt32 {
+		return types.ErrTooBigDisplayWidth.Gen("Display width out of range for column '%s' (max = %d)", colDef.Name.Name.O, math.MaxInt32)
 	}
 
 	switch tp.Tp {

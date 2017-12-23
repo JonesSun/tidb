@@ -56,7 +56,7 @@ const (
 	// NewSessionDefaultRetryCnt is the default retry times when create new session.
 	NewSessionDefaultRetryCnt = 3
 	// NewSessionRetryUnlimited is the unlimited retry times when create new session.
-	NewSessionRetryUnlimited = math.MaxInt64
+	NewSessionRetryUnlimited = int64(math.MaxInt64)
 )
 
 // ownerManager represents the structure which is used for electing owner.
@@ -122,11 +122,11 @@ func setManagerSessionTTL() error {
 }
 
 // NewSession creates a new etcd session.
-func NewSession(ctx goctx.Context, logPrefix string, etcdCli *clientv3.Client, retryCnt, ttl int) (*concurrency.Session, error) {
+func NewSession(ctx goctx.Context, logPrefix string, etcdCli *clientv3.Client, retryCnt int64, ttl int) (*concurrency.Session, error) {
 	var err error
 	var etcdSession *concurrency.Session
 	failedCnt := 0
-	for i := 0; i < retryCnt; i++ {
+	for i := int64(0); i < retryCnt; i++ {
 		if isContextDone(ctx) {
 			return etcdSession, errors.Trace(ctx.Err())
 		}
