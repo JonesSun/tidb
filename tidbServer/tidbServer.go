@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package tidbServer
 
 import (
 	"flag"
@@ -47,9 +47,8 @@ import (
 	"github.com/pingcap/tipb/go-binlog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"github.com/pingcap/pd/_vendor/src/github.com/opentracing/opentracing-go"
 )
 
 // Flag Names
