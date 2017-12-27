@@ -49,7 +49,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"github.com/pingcap/tidb/_vendor/src/github.com/pingcap/tipb/go-binlog"
 )
 
 // Flag Names
