@@ -19,7 +19,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"runtime"
+	//"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -49,6 +49,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"github.com/pingcap/tidb/_vendor/src/github.com/pingcap/tipb/go-binlog"
 )
 
 // Flag Names
@@ -135,7 +136,7 @@ func run() {
 	//	os.Exit(0)
 	//}
 
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	//runtime.GOMAXPROCS(runtime.NumCPU())
 
 	registerStores()
 	loadConfig()
